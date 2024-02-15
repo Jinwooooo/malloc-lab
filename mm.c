@@ -84,29 +84,29 @@ int mm_init(void) {
 }
 
 void *mm_malloc(size_t size) {
-    // // if size is 0, no need to malloc anything
-    // if(size == 0)
-    //     return NULL;
+    // if size is 0, no need to malloc anything
+    if(size == 0)
+        return NULL;
 
-    // size_t alloc_size = MAX(ALIGN(size) + SIZE8, BLOCKSIZE);
-    // size_t extend_size;
-    // char *curr_ptr;
+    size_t alloc_size = MAX(ALIGN(size) + SIZE8, BLOCKSIZE);
+    size_t extend_size;
+    char *curr_ptr;
 
-    // // search free list to fit the block
-    // if((curr_ptr = find_first_fit(alloc_size))) {
-    //     place(curr_ptr, alloc_size);
-    //     return curr_ptr;
-    // }
+    // search free list to fit the block
+    if((curr_ptr = find_first_fit(alloc_size))) {
+        place(curr_ptr, alloc_size);
+        return curr_ptr;
+    }
 
-    // // if free list cannot allocate, get more memory and place block
-    // extend_size = MAX(alloc_size, BLOCKSIZE);
-    // if((curr_ptr = extend_heap(extend_size / SIZE4)) == NULL)
-    //     return NULL;
+    // if free list cannot allocate, get more memory and place block
+    extend_size = MAX(alloc_size, BLOCKSIZE);
+    if((curr_ptr = extend_heap(extend_size / SIZE4)) == NULL)
+        return NULL;
 
-    // // place the newly allocated block
-    // place(curr_ptr, alloc_size);
+    // place the newly allocated block
+    place(curr_ptr, alloc_size);
 
-    // return curr_ptr;
+    return curr_ptr;
 }
 
 void *mm_realloc(void *curr_ptr, size_t size) {
@@ -181,25 +181,25 @@ static void *coalesce(void *curr_ptr) {
 // skeletal code from CS:APP - diagram 9.45
 // [MOD] increase the size heap if not enough free list
 static void *extend_heap(size_t size) {
-    // char *brk_ptr;
-    // size_t alloc_size;
+    char *brk_ptr;
+    size_t alloc_size;
 
-    // // adjust the size so the alignment and min block size req are satisfied
-    // alloc_size = (size % 2) ? (size + 1) * SIZE4 : size * SIZE4;
-    // if(alloc_size < BLOCKSIZE)
-    //     alloc_size = BLOCKSIZE;
+    // adjust the size so the alignment and min block size req are satisfied
+    alloc_size = (size % 2) ? (size + 1) * SIZE4 : size * SIZE4;
+    if(alloc_size < BLOCKSIZE)
+        alloc_size = BLOCKSIZE;
 
-    // // attempt to grow the heap by the adjusted size
-    // if((brk_ptr = mem_sbrk(alloc_size)) == (void *) - 1)
-    //     return NULL;
+    // attempt to grow the heap by the adjusted size
+    if((brk_ptr = mem_sbrk(alloc_size)) == (void *) - 1)
+        return NULL;
 
-    // // set the hdr and ftr of the newly created free block
-    // PUT(HDRP(brk_ptr), PACK(alloc_size,0));
-    // PUT(FTRP(brk_ptr), PACK(alloc_size,0));
-    // // move the epilogue (tail) to the end
-    // PUT(HDRP(NEXT_BLKP(brk_ptr)), PACK(0,1));
+    // set the hdr and ftr of the newly created free block
+    PUT(HDRP(brk_ptr), PACK(alloc_size,0));
+    PUT(FTRP(brk_ptr), PACK(alloc_size,0));
+    // move the epilogue (tail) to the end
+    PUT(HDRP(NEXT_BLKP(brk_ptr)), PACK(0,1));
 
-    // return coalesce(brk_ptr);
+    return coalesce(brk_ptr);
 }
 
 static void *find_first_fit(size_t size) {
@@ -214,26 +214,26 @@ static void *find_first_fit(size_t size) {
 }
 
 static void place(void *curr_ptr, size_t alloc_size) {
-    // // Gets the total size of the free block 
-    // size_t free_size = GET_SIZE(HDRP(curr_ptr));
+    // Gets the total size of the free block 
+    size_t free_size = GET_SIZE(HDRP(curr_ptr));
 
-    // if((free_size - alloc_size ) >= BLOCKSIZE) {
-    //     PUT(HDRP(curr_ptr), PACK(alloc_size,1));
-    //     PUT(FTRP(curr_ptr), PACK(alloc_size,1));
+    if((free_size - alloc_size ) >= BLOCKSIZE) {
+        PUT(HDRP(curr_ptr), PACK(alloc_size,1));
+        PUT(FTRP(curr_ptr), PACK(alloc_size,1));
 
-    //     remove_free_block(curr_ptr);
-    //     curr_ptr = NEXT_BLKP(curr_ptr);
+        remove_free_block(curr_ptr);
+        curr_ptr = NEXT_BLKP(curr_ptr);
 
-    //     PUT(HDRP(curr_ptr), PACK(free_size - alloc_size, 0));
-    //     PUT(FTRP(curr_ptr), PACK(free_size - alloc_size, 0));
+        PUT(HDRP(curr_ptr), PACK(free_size - alloc_size, 0));
+        PUT(FTRP(curr_ptr), PACK(free_size - alloc_size, 0));
 
-    //     coalesce(curr_ptr);
-    // } else {
-    //     PUT(HDRP(curr_ptr), PACK(free_size, 1));
-    //     PUT(FTRP(curr_ptr), PACK(free_size, 1));
+        coalesce(curr_ptr);
+    } else {
+        PUT(HDRP(curr_ptr), PACK(free_size, 1));
+        PUT(FTRP(curr_ptr), PACK(free_size, 1));
 
-    //     remove_free_block(curr_ptr);
-    // }
+        remove_free_block(curr_ptr);
+    }
 }
 
 static void remove_free_block(void *curr_ptr) {
