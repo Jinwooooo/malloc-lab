@@ -7,6 +7,14 @@
 #include "mm.h"
 #include "memlib.h"
 
+team_t team = {
+    "Lost Ark",
+    "Thamine",
+    "nocturn@kazeroth.petra",
+    "",
+    ""
+};
+
 /***** [MOD] FUNCTION CALL *****/
 static void *coalesce(void *curr_ptr);
 static void *extend_heap(size_t size);
