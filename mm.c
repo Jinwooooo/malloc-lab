@@ -37,8 +37,8 @@ static void remove_free_block(void *curr_ptr);
 #define PACK(size, alloc)   ((size) | (alloc))
 #define GET(curr_ptr)       (*(unsigned int *)(curr_ptr))
 #define PUT(curr_ptr,val)   (*(unsigned int *)(curr_ptr) = (val))
-#define GET_SIZE(p)         (GET(curr_ptr) & ~0x7)  // ~0x7 = 00000111 = masks out three LSB, used for memory alignment
-#define GET_ALLOC(p)        (GET(curr_ptr) & 0x1)   // 0x1 = 00000001 = isolates LSB => LSB = 1 means memory is considered alloated 0 otherwise 
+#define GET_SIZE(curr_ptr)  (GET(curr_ptr) & ~0x7)  // ~0x7 = 00000111 = masks out three LSB, used for memory alignment
+#define GET_ALLOC(curr_ptr) (GET(curr_ptr) & 0x1)   // 0x1 = 00000001 = isolates LSB => LSB = 1 means memory is considered alloated 0 otherwise 
 #define HDRP(curr_ptr)      ((char *)(curr_ptr) - SIZE4)                                    // HeaDeR Pointer
 #define FTRP(curr_ptr)      ((char *)(curr_ptr) + GET_SIZE(HDRP(curr_ptr)) - SIZE8)         // FooTeR Pointer
 #define NEXT_BLKP(curr_ptr) ((char *)(curr_ptr) + GET_SIZE(((char *)(curr_ptr) - SIZE4)))   // NEXT BLocK
@@ -95,7 +95,7 @@ void *mm_malloc(size_t size) {
     // search free list to fit the block
     if((curr_ptr = find_first_fit(alloc_size))) {
         place(curr_ptr, alloc_size);
-        return curr_ptr
+        return curr_ptr;
     }
 
     // if free list cannot allocate, get more memory and place block
@@ -110,19 +110,19 @@ void *mm_malloc(size_t size) {
 }
 
 void *mm_realloc(void *curr_ptr, size_t size) {
-    // void *oldptr = ptr;
-    // void *newptr;
-    // size_t copySize;
+    void *oldptr = ptr;
+    void *newptr;
+    size_t copySize;
     
-    // newptr = mm_malloc(size);
-    // if (newptr == NULL)
-    //   return NULL;
-    // copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    // if (size < copySize)
-    //   copySize = size;
-    // memcpy(newptr, oldptr, copySize);
-    // mm_free(oldptr);
-    // return newptr;
+    newptr = mm_malloc(size);
+    if (newptr == NULL)
+      return NULL;
+    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+    if (size < copySize)
+      copySize = size;
+    memcpy(newptr, oldptr, copySize);
+    mm_free(oldptr);
+    return newptr;
 }
 
 // CS:APP - diagram 9.46
@@ -149,21 +149,21 @@ static void *coalesce(void *curr_ptr) {
     // case 2 : prev block is allocated & next block is free (i.e. coalesce next block)
     if(prev_alloc && !next_alloc) {
         size += GET_SIZE(HDRP(NEXT_BLKP(curr_ptr)));
-        remove_freeblock(NEXT_BLKP(curr_ptr));
+        remove_free_block(NEXT_BLKP(curr_ptr));
         PUT(HDRP(curr_ptr), PACK(size,0));
         PUT(FTRP(curr_ptr), PACK(size,0));
     // case 3 : prev block is free & next block is allocated (i.e. coalesce prev block)
     } else if(!prev_alloc && next_alloc) {
         size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr)));
-        remove_freeblock(curr_ptr);
+        remove_free_block(curr_ptr);
         PUT(FTRP(curr_ptr), PACK(size,0));
         PUT(HDRP(PREV_BLKP(curr_ptr)), PACK(size,0));
         curr_ptr = PREV_BLKP(curr_ptr);
     // case 4 : previous & next block are both free (i.e. coalesce next & prev block)
     } else if(!prev_alloc && !next_alloc) {
         size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr))) + GET_SIZE(FTRP(NEXT_BLKP(curr_ptr)));
-        remove_freeblock(PREV_BLKP(curr_ptr));
-        remove_freeblock(NEXT_BLKP(curr_ptr));
+        remove_free_block(PREV_BLKP(curr_ptr));
+        remove_free_block(NEXT_BLKP(curr_ptr));
         curr_ptr = PREV_BLKP(curr_ptr);
         PUT(HDRP(curr_ptr), PACK(size, 0));
         PUT(FTRP(curr_ptr), PACK(size, 0)); 
