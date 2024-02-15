@@ -110,19 +110,19 @@ void *mm_malloc(size_t size) {
 }
 
 void *mm_realloc(void *curr_ptr, size_t size) {
-    void *oldptr = ptr;
-    void *newptr;
-    size_t copySize;
+    // void *oldptr = ptr;
+    // void *newptr;
+    // size_t copySize;
     
-    newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-      copySize = size;
-    memcpy(newptr, oldptr, copySize);
-    mm_free(oldptr);
-    return newptr;
+    // newptr = mm_malloc(size);
+    // if (newptr == NULL)
+    //   return NULL;
+    // copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+    // if (size < copySize)
+    //   copySize = size;
+    // memcpy(newptr, oldptr, copySize);
+    // mm_free(oldptr);
+    // return newptr;
 }
 
 // CS:APP - diagram 9.46
