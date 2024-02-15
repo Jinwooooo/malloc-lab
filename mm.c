@@ -138,44 +138,44 @@ void mm_free(void *curr_ptr) {
 // skeletal code from CS:APP - diagram 9.46
 // [MOD] function to merge unused space
 static void *coalesce(void *curr_ptr) {
-    // // determining the current allocation state of prev and next block
-    // size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(curr_ptr)));
-    // size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(curr_ptr)));
+    // determining the current allocation state of prev and next block
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(curr_ptr)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(curr_ptr)));
 
-    // // get the size of the next free block
-    // size_t size = GET_SIZE(HDRP(curr_ptr));
+    // get the size of the next free block
+    size_t size = GET_SIZE(HDRP(curr_ptr));
 
-    // // case 1 : prev block & next block are both allocated (i.e. does not coalesce) so not in code
-    // // case 2 : prev block is allocated & next block is free (i.e. coalesce next block)
-    // if(prev_alloc && !next_alloc) {
-    //     size += GET_SIZE(HDRP(NEXT_BLKP(curr_ptr)));
-    //     remove_free_block(NEXT_BLKP(curr_ptr));
-    //     PUT(HDRP(curr_ptr), PACK(size,0));
-    //     PUT(FTRP(curr_ptr), PACK(size,0));
-    // // case 3 : prev block is free & next block is allocated (i.e. coalesce prev block)
-    // } else if(!prev_alloc && next_alloc) {
-    //     size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr)));
-    //     remove_free_block(curr_ptr);
-    //     PUT(FTRP(curr_ptr), PACK(size,0));
-    //     PUT(HDRP(PREV_BLKP(curr_ptr)), PACK(size,0));
-    //     curr_ptr = PREV_BLKP(curr_ptr);
-    // // case 4 : previous & next block are both free (i.e. coalesce next & prev block)
-    // } else if(!prev_alloc && !next_alloc) {
-    //     size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr))) + GET_SIZE(FTRP(NEXT_BLKP(curr_ptr)));
-    //     remove_free_block(PREV_BLKP(curr_ptr));
-    //     remove_free_block(NEXT_BLKP(curr_ptr));
-    //     curr_ptr = PREV_BLKP(curr_ptr);
-    //     PUT(HDRP(curr_ptr), PACK(size, 0));
-    //     PUT(FTRP(curr_ptr), PACK(size, 0)); 
-    // }
+    // case 1 : prev block & next block are both allocated (i.e. does not coalesce) so not in code
+    // case 2 : prev block is allocated & next block is free (i.e. coalesce next block)
+    if(prev_alloc && !next_alloc) {
+        size += GET_SIZE(HDRP(NEXT_BLKP(curr_ptr)));
+        remove_free_block(NEXT_BLKP(curr_ptr));
+        PUT(HDRP(curr_ptr), PACK(size,0));
+        PUT(FTRP(curr_ptr), PACK(size,0));
+    // case 3 : prev block is free & next block is allocated (i.e. coalesce prev block)
+    } else if(!prev_alloc && next_alloc) {
+        size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr)));
+        remove_free_block(curr_ptr);
+        PUT(FTRP(curr_ptr), PACK(size,0));
+        PUT(HDRP(PREV_BLKP(curr_ptr)), PACK(size,0));
+        curr_ptr = PREV_BLKP(curr_ptr);
+    // case 4 : previous & next block are both free (i.e. coalesce next & prev block)
+    } else if(!prev_alloc && !next_alloc) {
+        size += GET_SIZE(HDRP(PREV_BLKP(curr_ptr))) + GET_SIZE(FTRP(NEXT_BLKP(curr_ptr)));
+        remove_free_block(PREV_BLKP(curr_ptr));
+        remove_free_block(NEXT_BLKP(curr_ptr));
+        curr_ptr = PREV_BLKP(curr_ptr);
+        PUT(HDRP(curr_ptr), PACK(size, 0));
+        PUT(FTRP(curr_ptr), PACK(size, 0)); 
+    }
 
-    // // insert the coalesced block at the front of the free list
-    // NEXT_FREE(curr_ptr) = free_list_ptr;
-    // PREV_FREE(free_list_ptr) = curr_ptr;
-    // PREV_FREE(curr_ptr) = NULL;
-    // free_list_ptr = curr_ptr;
+    // insert the coalesced block at the front of the free list
+    NEXT_FREE(curr_ptr) = free_list_ptr;
+    PREV_FREE(free_list_ptr) = curr_ptr;
+    PREV_FREE(curr_ptr) = NULL;
+    free_list_ptr = curr_ptr;
 
-    // return curr_ptr;
+    return curr_ptr;
 }
 
 // skeletal code from CS:APP - diagram 9.45
@@ -203,14 +203,14 @@ static void *extend_heap(size_t size) {
 }
 
 static void *find_first_fit(size_t size) {
-    // void *ff_ptr;
+    void *ff_ptr;
 
-    // for(ff_ptr = free_list_ptr; GET_ALLOC(HDRP(ff_ptr)) == 0; ff_ptr = NEXT_FREE(ff_ptr)) {
-    //     if(size <= GET_SIZE(HDRP(ff_ptr)))
-    //         return ff_ptr;
-    // }
+    for(ff_ptr = free_list_ptr; GET_ALLOC(HDRP(ff_ptr)) == 0; ff_ptr = NEXT_FREE(ff_ptr)) {
+        if(size <= GET_SIZE(HDRP(ff_ptr)))
+            return ff_ptr;
+    }
 
-    // return NULL;
+    return NULL;
 }
 
 static void place(void *curr_ptr, size_t alloc_size) {
