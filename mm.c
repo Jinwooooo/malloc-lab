@@ -47,7 +47,7 @@ static void remove_free_block(void *curr_ptr);
 #define PREV_FREE(free_ptr)  (*(void **)(free_ptr + SIZE4))
 
 static char *heap_head_ptr = 0;
-static char *free_list_ptr = 0;
+static char *free_list_ptr = 0; // [MOD] to keep track of explicit Doubly Linked List
 
 /* 
 ---------------------------------------------
@@ -69,8 +69,7 @@ free list structure visualized
 |--------------|--------------|--------------|-------------------|--------------|
 
 Besides the free list structure, this application will keep the free block in front of the
-heap to have faster search time. This will increase the time consumed when coalescing and
-extending heap.
+heap (logically, not physically). This produces extra steps in coalescing and realloc.
 ---------------------------------------------
 */
 
@@ -144,7 +143,7 @@ void mm_free(void *curr_ptr) {
     coalesce(curr_ptr);
 }
 
-// [MOD] because freed block will be moved to the front, extra procedures are required
+// [MOD] because freed block will be moved to the front (not physically, only logically), extra procedures are required
 void *mm_realloc(void *curr_ptr, size_t size) {
     if (curr_ptr == NULL)
         return mm_malloc(size);
@@ -251,7 +250,7 @@ static void *coalesce(void *curr_ptr) {
 }
 
 // skeletal code from CS:APP - diagram 9.45
-// [MOD] increase the size heap if not enough free list
+// [MOD] increase the size heap if free list cannot handle new payload
 static void *extend_heap(size_t curr_size) {
       char *curr_ptr;
       size_t alloc_size;
@@ -286,7 +285,7 @@ static void *find_first_fit(size_t size) {
     return NULL;
 }
 
-// [MOD] places payload into the curr ptr position
+// [MOD] places payload into the curr_ptr position
 static void place(void *curr_ptr, size_t alloc_size) {
     // Gets the total size of the free block 
     size_t free_size = GET_SIZE(HDRP(curr_ptr));
